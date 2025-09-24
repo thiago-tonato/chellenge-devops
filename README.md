@@ -160,20 +160,3 @@ az container logs --resource-group mottu-rg --name mottu-compose
 # Verificar recursos
 az group list
 ```
-
-## 📞 **Suporte**
-
-- 📖 **Documentação**: Veja os arquivos `.md` na raiz do projeto
-- 🐛 **Bugs**: Abra uma issue no repositório
-- 💡 **Sugestões**: Contribua com melhorias
-
-## 🎉 **Próximos Passos**
-
-1. ✅ **Configure o ambiente** - Siga o início rápido
-2. ✅ **Teste localmente** - Use `docker-compose up`
-3. ✅ **Faça deploy** - Use `./deploy-azure.sh`
-4. ✅ **Personalize** - Adapte para suas necessidades
-
----
-
-**Desenvolvido com ❤️ para o projeto Mottu**

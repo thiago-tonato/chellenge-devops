@@ -228,13 +228,3 @@ networks:
     driver: bridge
     internal: false  # Para acesso externo
 ```
-
-## 📚 **Recursos Adicionais**
-
-- 📖 **Docker Docs**: https://docs.docker.com/
-- 🐳 **Docker Compose**: https://docs.docker.com/compose/
-- ☁️ **Azure Container Instances**: https://docs.microsoft.com/azure/container-instances/
-
----
-
-**💡 Dica**: Use `docker-compose up --build` sempre que fizer alterações no código!

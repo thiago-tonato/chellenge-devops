@@ -205,14 +205,3 @@ curl http://mottu-compose.eastus.azurecontainer.io:8080/api/motos
 # Teste básico
 curl http://mottu-compose.eastus.azurecontainer.io:8080/
 ```
-
-## 🎯 **Próximos Passos**
-
-1. ✅ **Teste o acesso** - Verifique se consegue acessar a aplicação
-2. ✅ **Conecte no banco** - Teste a conexão com MySQL
-3. ✅ **Configure ferramentas** - Use MySQL Workbench ou DBeaver
-4. ✅ **Monitore** - Acompanhe logs e performance
-
----
-
-**💡 Dica**: Salve o endereço da aplicação em seus favoritos para acesso rápido!

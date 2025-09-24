@@ -306,27 +306,3 @@ az container logs --resource-group mottu-rg --name mottu-compose --container-nam
 # Testar conectividade
 telnet mottu-compose.eastus.azurecontainer.io 3306
 ```
-
-## 💰 **Custos e Limitações**
-
-### **Custos**
-- **ACI**: Cobrado por segundo (ideal para cargas variáveis)
-- **ACR**: Cobrado por armazenamento e operações
-- **MySQL**: Cobrado por hora (se usar Azure Database)
-
-### **Limitações**
-- **ACI**: Máximo 4 vCPUs e 16GB RAM por container
-- **ACR**: Limite de 10GB para tier Basic
-- **Persistência**: Use Azure Files ou Azure Database para dados persistentes
-
-## 🎯 **Próximos Passos**
-
-1. ✅ **Teste o deploy** - Verifique se a aplicação está funcionando
-2. ✅ **Configure monitoramento** - Use Azure Monitor e Application Insights
-3. ✅ **Implemente segurança** - Use Key Vault e Managed Identity
-4. ✅ **Configure backup** - Implemente estratégia de backup
-5. ✅ **Otimize custos** - Monitore e otimize recursos
-
----
-
-**💡 Dica**: Use o script `deploy-azure.sh` para deploy rápido e automatizado!
