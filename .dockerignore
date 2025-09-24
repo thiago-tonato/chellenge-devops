@@ -1,0 +1,57 @@
+# Arquivos de build
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de log
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Arquivos de configuração local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de Git
+.git/
+.gitignore
+
+# Arquivos de Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Arquivos de documentação
+README.md
+*.md
+
+# Arquivos de teste
+src/test/
+
+# Arquivos de Maven
+.mvn/wrapper/maven-wrapper.jar

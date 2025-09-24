@@ -1,191 +1,179 @@
-# 🏍️ Rastreamento de Motos com UWB — API Java Spring Boot
+# 🏍️ Sistema de Rastreamento de Motos - Mottu
 
-Aplicação Web completa desenvolvida em Spring Boot, com foco em Thymeleaf (frontend), Flyway (versionamento do banco) e Spring Security (autenticação e autorização).
-A solução oferece suporte ao rastreamento preciso de motos da Mottu, integrando controle de alocações e manutenções, além do cadastro de motos e sensores UWB.
+> **Sistema completo para rastreamento de motos usando tecnologia UWB (Ultra-Wideband)**
 
----
+## 🚀 **Início Rápido**
 
-## 📌 Objetivo
-
-Resolver o problema de localização e gestão de motos em pátios de alta densidade, utilizando sensores UWB (Ultra Wideband) para rastreamento individual, aliado a uma aplicação segura e fácil de usar.
-
----
-
-## ⚙️ Tecnologias Utilizadas
-
-✅ Java 17
-
-✅ Spring Boot 3.4.5
-
-✅ Spring Web
-
-✅ Spring Data JPA
-
-✅ Spring Security (BCrypt, roles ADMIN/USER)
-
-✅ Thymeleaf + Thymeleaf Extras Spring Security
-
-✅ Bean Validation
-
-✅ Flyway (versionamento do banco)
-
-✅ PostgreSQL
-
-✅ Maven
-
----
-
-## 🗂️ Funcionalidades da Aplicação
-### 🔧 CRUDs com Thymeleaf
-
-- Motos
-- Sensores UWB:
-  - ✔️ Com validação de campos e mensagens de erro no formulário
-  - ✔️ Páginas estruturadas com fragments (_head, _navbar, _footer)
-
-### 🔐 Segurança
-
-- Login via formulário (Spring Security + Thymeleaf)
-- Usuários com perfis ADMIN e USER
-- Regras de acesso:
-  - /motos, /sensores, /alocacoes, /manutencoes → ADMIN e USER
-  - Apenas ADMIN pode criar, editar ou excluir
-
-### 📦 Versionamento do Banco (Flyway)
-
-- V1__create_sensores.sql → Criação da tabela de sensores
-- V2__create_motos.sql → Criação da tabela de motos
-- V3__insert_sensores.sql → Seed de sensores iniciais
-- V4__insert_motos.sql → Seed de motos iniciais
-- V5__create_roles.sql → Criação de roles
-- V6__create_users.sql → Criação de usuários
-- V7__create_alocacoes.sql → Criação de alocações
-- V8__create_manutencoes.sql → Criação de manutenções
-- V9__insert_roles_and_users.sql → Seed de roles e usuários (admin123, user123)
-
-### 🔄 Funcionalidades Avançadas
-
-#### Fluxo A — Alocação de Motos
-- Abrir alocação → moto precisa estar DISPONÍVEL
-- Encerrar alocação → moto volta a ficar DISPONÍVEL
-- Impede múltiplas alocações abertas para a mesma moto
-- Listagem de alocações abertas + histórico
-
-#### Fluxo B — Manutenção
-- Abrir manutenção → moto muda para MANUTENÇÃO
-- Fechar manutenção → moto volta para DISPONÍVEL
-- Impede alocação de moto em manutenção
-- Lista de manutenções abertas e encerradas
-
-### ✅ Extras
-
-- Formatação de datas para dd/MM/yyyy HH:mm
-- Páginas adaptadas conforme perfil:
-  - Usuário USER → sem botões de “Nova” e sem coluna de ações
-  - Usuário ADMIN → pode gerenciar todas as entidades
-
----
-
-## 🔄 Endpoints da API (REST)
-### 📌 Motos
-
-| Método | Endpoint                          | Descrição                                |
-|--------|-----------------------------------|------------------------------------------|
-GET	| api/motos	| Lista motos |
-GET	| api/motos/{id} |	Busca moto por ID |
-POST	| api/motos	| Cria nova moto |
-PUT	| api/motos/{id} | Atualiza moto existente |
-DELETE	| api/motos/{id} |	Remove moto |
-
-### 📌 Sensores
-
-| Método | Endpoint                          | Descrição                                |
-|--------|-----------------------------------|------------------------------------------|
-GET	| api/sensores |	Lista sensores |
-GET	| api/sensores/{id}	| Busca sensor por ID |
-POST	| api/sensores | Cria novo sensor |
-PUT	| api/sensores/{id}	| Atualiza sensor existente |
-DELETE	| api/sensores/{id}	| Remove sensor |
-
-### 📌 Alocações
-
-| Método | Endpoint                          | Descrição                                |
-|--------|-----------------------------------|------------------------------------------|
-GET	 | api/alocacoes  |	Lista alocações  |
-POST	 |api/alocacoes  |	Abre alocação  |
-PUT	 | api/alocacoes/{id}  |	Encerra alocação  |
-### 📌 Manutenções
-
-| Método | Endpoint                          | Descrição                                |
-|--------|-----------------------------------|------------------------------------------|
-GET	 | api/manutencoes	 | Lista manutenções  |
-POST	 | api/manutencoes  |	Abre manutenção  |
-PUT	 | api/manutencoes/{id}  | Encerra manutenção  |
-
----
-
-## 🧪 Como rodar localmente
-### Clone o repositório:
-```
-git clone https://github.com/murilors27/api-rest-mottu.git
+### **Opção 1: Executar Localmente (Desenvolvimento)**
+```bash
+# 1. Clone o repositório
+git clone <seu-repositorio>
 cd api-rest-mottu
+
+# 2. Execute com Docker
+docker-compose up --build
+
+# 3. Acesse a aplicação
+# 🌐 http://localhost:8080
+# 🗄️ MySQL: localhost:3306
 ```
 
-### Configure o banco PostgreSQL no application.yml:
-```java
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/mottu
-    username: postgres
-    password: postgres
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-  flyway:
-    enabled: true
+### **Opção 2: Deploy no Azure (Produção)**
+```bash
+# 1. Execute o script de deploy
+./deploy-azure.sh mottuacr mottu-rg
+
+# 2. Aguarde o deploy (2-3 minutos)
+# 3. Acesse usando o endereço fornecido pelo script
 ```
 
-### Execute o projeto:
+## 📋 **O que você precisa**
+
+### **Para Desenvolvimento Local:**
+- ✅ Docker e Docker Compose
+- ✅ Git
+
+### **Para Deploy no Azure:**
+- ✅ Azure CLI instalado
+- ✅ Conta do Azure
+- ✅ Docker e Docker Compose
+
+## 🏗️ **Arquitetura do Sistema**
+
 ```
-./mvnw spring-boot:run
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (Thymeleaf)   │◄──►│   (Spring Boot) │◄──►│   (MySQL)       │
+│   Port: 8080    │    │   Port: 8080    │    │   Port: 3306    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Acesse:
-- Frontend (Thymeleaf): http://localhost:8080/motos
-- Login:
-  - Admin → admin / admin123
-  - User → user / user123
+## 🎯 **Funcionalidades**
+
+- 🏍️ **Gestão de Motos** - Cadastro e controle de motocicletas
+- 📍 **Rastreamento UWB** - Localização em tempo real via sensores
+- 🔧 **Manutenção** - Controle de manutenções e serviços
+- 📊 **Alocações** - Gestão de alocações de motos
+- 👥 **Usuários** - Sistema de autenticação e autorização
+- 📱 **Interface Web** - Dashboard intuitivo
+
+## 🛠️ **Tecnologias Utilizadas**
+
+| Tecnologia | Versão | Descrição |
+|------------|--------|-----------|
+| **Java** | 17 | Linguagem principal |
+| **Spring Boot** | 3.4.5 | Framework web |
+| **MySQL** | 8.0 | Banco de dados |
+| **Docker** | Latest | Containerização |
+| **Azure ACI** | - | Orquestração na nuvem |
+| **Flyway** | 10.22.0 | Migração de banco |
+
+## 📁 **Estrutura do Projeto**
+
+```
+api-rest-mottu/
+├── 🐳 Dockerfile              # Imagem da aplicação
+├── 🐳 docker-compose.yml      # Orquestração local
+├── 🚀 deploy-azure.sh         # Deploy no Azure
+├── 📚 README.md               # Este arquivo
+├── 📖 DOCKER_USAGE.md         # Guia do Docker
+├── 🌐 ACESSO_EXTERNO.md       # Acesso remoto
+├── ☁️ AZURE_DEPLOY.md         # Deploy no Azure
+└── src/
+    └── main/
+        ├── java/              # Código Java
+        ├── resources/         # Configurações
+        └── templates/         # Páginas HTML
+```
+
+## 🎮 **Como Usar**
+
+### **1. Desenvolvimento Local**
+```bash
+# Iniciar aplicação
+docker-compose up --build
+
+# Ver logs
+docker-compose logs -f
+
+# Parar aplicação
+docker-compose down
+```
+
+### **2. Deploy no Azure**
+```bash
+# Deploy automático
+./deploy-azure.sh mottuacr mottu-rg
+
+# Ver status
+az container show --resource-group mottu-rg --name mottu-compose
+```
+
+## 🔐 **Credenciais Padrão**
+
+### **Banco de Dados:**
+- **Host**: `localhost` (local) ou `<FQDN>` (Azure)
+- **Porta**: `3306`
+- **Usuário**: `mottu`
+- **Senha**: `FIAP@2tdsp!`
+- **Database**: `mottu`
+
+### **Aplicação:**
+- **URL**: `http://localhost:8080` (local) ou `http://<FQDN>:8080` (Azure)
+- **Login**: Configure no sistema
+
+## 📱 **Endpoints da API**
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/` | GET | Página inicial |
+| `/api/motos` | GET | Listar motos |
+| `/api/sensores` | GET | Listar sensores |
+| `/api/alocacoes` | GET | Listar alocações |
+| `/api/manutencoes` | GET | Listar manutenções |
+
+## 🆘 **Problemas Comuns**
+
+### **❌ Container não inicia**
+```bash
+# Ver logs
+docker-compose logs app
+
+# Verificar portas
+netstat -tulpn | grep :8080
+```
+
+### **❌ Erro de conexão com banco**
+```bash
+# Verificar MySQL
+docker-compose logs mysql
+
+# Testar conexão
+mysql -h localhost -P 3306 -u mottu -p
+```
+
+### **❌ Deploy falha no Azure**
+```bash
+# Ver logs do Azure
+az container logs --resource-group mottu-rg --name mottu-compose
+
+# Verificar recursos
+az group list
+```
+
+## 📞 **Suporte**
+
+- 📖 **Documentação**: Veja os arquivos `.md` na raiz do projeto
+- 🐛 **Bugs**: Abra uma issue no repositório
+- 💡 **Sugestões**: Contribua com melhorias
+
+## 🎉 **Próximos Passos**
+
+1. ✅ **Configure o ambiente** - Siga o início rápido
+2. ✅ **Teste localmente** - Use `docker-compose up`
+3. ✅ **Faça deploy** - Use `./deploy-azure.sh`
+4. ✅ **Personalize** - Adapte para suas necessidades
 
 ---
 
-## 📸 Exemplos de JSON (API)
-Criar Moto
-```
-{
-  "modelo": "Honda CG 160",
-  "cor": "Preto",
-  "identificadorUWB": "UWB001",
-  "sensorId": 1
-}
-```
-
-Criar Sensor
-```
-{
-  "localizacao": "Setor A - Coluna 3"
-}
-```
-
----
-
-## 👥 Equipe
-
-| Nome                                | RM       | GitHub                                |
-|-------------------------------------|----------|----------------------------------------|
-| Murilo Ribeiro Santos               | RM555109 | [@murilors27](https://github.com/murilors27) |
-| Thiago Garcia Tonato                | RM99404  | [@thiago-tonato](https://github.com/thiago-tonato) |
-| Ian Madeira Gonçalves da Silva      | RM555502 | [@IanMadeira](https://github.com/IanMadeira) |
-
-**Curso**: Análise e Desenvolvimento de Sistemas  
-**Instituição**: FIAP – Faculdade de Informática e Administração Paulista
+**Desenvolvido com ❤️ para o projeto Mottu**
