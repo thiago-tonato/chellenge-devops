@@ -1,5 +1,5 @@
 # Multi-stage build para otimizar o tamanho da imagem
-FROM maven:3.9.6-openjdk-17-slim AS build
+FROM maven:3.9.4-eclipse-temurin AS build
 
 # Definir diretório de trabalho
 WORKDIR /app
@@ -17,11 +17,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Imagem final
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre
 
 # Instalar dependências necessárias
-RUN apt-get update && apt-get install -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 # Criar usuário não-root para segurança
 RUN groupadd -r appuser && useradd -r -g appuser appuser

@@ -21,7 +21,7 @@ docker-compose up --build
 ### **Opção 2: Deploy no Azure (Produção)**
 ```bash
 # 1. Execute o script de deploy
-./deploy-azure.sh mottuacr mottu-rg
+./deploy-azure.sh challengemottuacr mottu-rg
 
 # 2. Aguarde o deploy (2-3 minutos)
 # 3. Acesse usando o endereço fornecido pelo script
@@ -103,7 +103,7 @@ docker-compose down
 ### **2. Deploy no Azure**
 ```bash
 # Deploy automático
-./deploy-azure.sh mottuacr mottu-rg
+./deploy-azure.sh challengemottuacr mottu-rg
 
 # Ver status
 az container show --resource-group mottu-rg --name mottu-compose

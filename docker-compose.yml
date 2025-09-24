@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile
     # Para produção no Azure: descomente a linha abaixo e comente o build
-    # image: ${ACR_NAME:-mottuacr}.azurecr.io/mottu-app:latest
+    # image: ${ACR_NAME:-challengemottuacr}.azurecr.io/mottu-app:latest
     container_name: mottu-app
     restart: unless-stopped
     ports:

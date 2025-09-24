@@ -11,7 +11,7 @@ Após fazer o deploy no Azure, sua aplicação fica disponível publicamente na 
 ### **Método 1: Script Automatizado (Mais Fácil)**
 ```bash
 # Execute o deploy
-./deploy-azure.sh mottuacr mottu-rg
+./deploy-azure.sh challengemottuacr mottu-rg
 
 # O script mostra automaticamente:
 # ✅ Endereço da aplicação

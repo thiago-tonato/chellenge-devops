@@ -32,7 +32,7 @@ print_info() {
 # Verificar parâmetros
 if [ $# -ne 2 ]; then
     print_error "Uso: $0 <ACR_NAME> <RESOURCE_GROUP>"
-    echo "Exemplo: $0 mottuacr mottu-rg"
+    echo "Exemplo: $0 challengemottuacr mottu-rg"
     exit 1
 fi
 

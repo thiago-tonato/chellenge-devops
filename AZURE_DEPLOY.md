@@ -14,7 +14,7 @@ Este guia mostra como fazer deploy da aplicação Mottu no Azure usando:
 ### **Método 1: Script Automatizado (Recomendado)**
 ```bash
 # Deploy completo em 3 comandos
-./deploy-azure.sh mottuacr mottu-rg
+./deploy-azure.sh challengemottuacr mottu-rg
 
 # O script faz tudo automaticamente:
 # ✅ Cria recursos no Azure
@@ -59,13 +59,13 @@ az group show --name mottu-rg
 ### **1.2 Criar Azure Container Registry (ACR)**
 ```bash
 # Criar ACR
-az acr create --resource-group mottu-rg --name mottuacr --sku Basic --admin-enabled true
+az acr create --resource-group mottu-rg --name challengemottuacr --sku Basic --admin-enabled true
 
 # Obter credenciais
-az acr credential show --name mottuacr --resource-group mottu-rg
+az acr credential show --name challengemottuacr --resource-group mottu-rg
 
 # Fazer login no ACR
-az acr login --name mottuacr
+az acr login --name challengemottuacr
 ```
 
 ### **1.3 Criar Azure Database for MySQL (Opcional)**
@@ -92,18 +92,18 @@ az mysql flexible-server db create \
 ### **2.1 Build da Aplicação**
 ```bash
 # Build da imagem
-docker build -t mottuacr.azurecr.io/mottu-app:latest .
+docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
 
 # Push para ACR
-docker push mottuacr.azurecr.io/mottu-app:latest
+docker push challengemottuacr.azurecr.io/mottu-app:latest
 ```
 
 ### **2.2 Build do MySQL**
 ```bash
 # Usar imagem oficial
 docker pull mysql:8.0
-docker tag mysql:8.0 mottuacr.azurecr.io/mottu-mysql:latest
-docker push mottuacr.azurecr.io/mottu-mysql:latest
+docker tag mysql:8.0 challengemottuacr.azurecr.io/mottu-mysql:latest
+docker push challengemottuacr.azurecr.io/mottu-mysql:latest
 ```
 
 ## 🚀 **Passo 3: Deploy no Azure**
@@ -128,7 +128,7 @@ properties:
   containers:
   - name: mottu-app
     properties:
-      image: mottuacr.azurecr.io/mottu-app:latest
+      image: challengemottuacr.azurecr.io/mottu-app:latest
       resources:
         requests:
           cpu: 1
@@ -147,7 +147,7 @@ properties:
         value: FIAP@2tdsp!
   - name: mottu-mysql
     properties:
-      image: mottuacr.azurecr.io/mottu-mysql:latest
+      image: challengemottuacr.azurecr.io/mottu-mysql:latest
       resources:
         requests:
           cpu: 1
@@ -174,8 +174,8 @@ properties:
       port: 3306
     dnsNameLabel: mottu-app
   imageRegistryCredentials:
-  - server: mottuacr.azurecr.io
-    username: mottuacr
+  - server: challengemottuacr.azurecr.io
+    username: challengemottuacr
     password: <PASSWORD_DO_ACR>
 EOF
 

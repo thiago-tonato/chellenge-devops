@@ -74,7 +74,7 @@ docker system df
 ### **Método 1: Script Automatizado (Recomendado)**
 ```bash
 # Deploy completo
-./deploy-azure.sh mottuacr mottu-rg
+./deploy-azure.sh challengemottuacr mottu-rg
 
 # O script faz tudo automaticamente:
 # ✅ Build da imagem
@@ -86,8 +86,8 @@ docker system df
 ### **Método 2: Manual**
 ```bash
 # 1. Build e push
-docker build -t mottuacr.azurecr.io/mottu-app:latest .
-docker push mottuacr.azurecr.io/mottu-app:latest
+docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
+docker push challengemottuacr.azurecr.io/mottu-app:latest
 
 # 2. Deploy
 az aci compose create --resource-group mottu-rg --name mottu-compose --file docker-compose.yml
