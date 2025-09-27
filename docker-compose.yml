@@ -17,7 +17,7 @@ services:
 
   # Aplicação Spring Boot
   app:
-    image: challengemottuacr.azurecr.io/mottu-app:latest
+    image: challengemottuacr.azurecr.io/app:latest
     ports:
       - "8080:8080"
     environment:
