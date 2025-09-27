@@ -21,7 +21,7 @@ docker-compose up --build
 ### **Opção 2: Deploy no Azure (Produção)**
 ```bash
 # 1. Execute o script de deploy
-./deploy-containerapp.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh
 
 # 2. Aguarde o deploy (2-3 minutos)
 # 3. Acesse usando o endereço fornecido pelo script

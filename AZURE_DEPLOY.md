@@ -13,8 +13,8 @@ Este guia mostra como fazer deploy da aplicação Mottu no Azure usando:
 
 ### **Método 1: Script Automatizado (Recomendado)**
 ```bash
-# Deploy completo em 3 comandos
-./deploy-containerapp.sh challengemottuacr mottu-rg
+# Deploy completo em 1 comando
+./deploy-containerapp.sh
 
 # O script faz tudo automaticamente:
 # ✅ Cria recursos no Azure
@@ -120,7 +120,7 @@ az containerapp compose create \
     --registry-password secretref:acr-secret
 
 # Ou usar o script automatizado
-./deploy-containerapp.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh
 ```
 
 ### **3.2 Deploy Manual (Para aprendizado)**

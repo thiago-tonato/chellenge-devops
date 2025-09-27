@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 🚀 Script de Deploy com Azure Container Apps - Sistema Mottu
-# Uso: ./deploy-containerapp.sh <ACR_NAME> <RESOURCE_GROUP>
+# Uso: ./deploy-containerapp.sh
 
 set -e
 
@@ -29,15 +29,9 @@ print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
-# Verificar parâmetros
-if [ $# -ne 2 ]; then
-    print_error "Uso: $0 <ACR_NAME> <RESOURCE_GROUP>"
-    echo "Exemplo: $0 challengemottuacr mottu-rg"
-    exit 1
-fi
-
-ACR_NAME=$1
-RESOURCE_GROUP=$2
+# Configurações fixas
+ACR_NAME="challengemottuacr"
+RESOURCE_GROUP="mottu-rg"
 APP_NAME="app"
 MYSQL_NAME="mysql"
 LOCATION="eastus"

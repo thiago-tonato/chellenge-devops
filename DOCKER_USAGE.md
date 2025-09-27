@@ -90,7 +90,7 @@ docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
 docker push challengemottuacr.azurecr.io/mottu-app:latest
 
 # 2. Deploy
-./deploy-containerapp.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh
 ```
 
 ## 🔧 **Configurações Avançadas**
