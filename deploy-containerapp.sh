@@ -141,12 +141,7 @@ print_info "Obtendo credenciais do ACR..."
 ACR_USERNAME=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "username" -o tsv)
 ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "passwords[0].value" -o tsv)
 
-# 11. Criar secret para ACR
-print_info "Criando secret para ACR..."
-az containerapp secret set --name acr-secret --resource-group $RESOURCE_GROUP --environment $ENVIRONMENT_NAME --secrets registry-password=$ACR_PASSWORD
-print_message "Secret do ACR criado"
-
-# 12. Deploy usando Container Apps Compose
+# 11. Deploy usando Container Apps Compose
 print_info "Fazendo deploy com Azure Container Apps..."
 if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
     print_warning "Container App '$APP_NAME' já existe. Removendo..."
@@ -160,24 +155,24 @@ az containerapp compose create \
     --compose-file-path docker-compose.yml \
     --registry-server $ACR_NAME.azurecr.io \
     --registry-username $ACR_USERNAME \
-    --registry-password secretref:acr-secret
+    --registry-password $ACR_PASSWORD
 
 print_message "Deploy com Container Apps concluído"
 
-# 13. Aguardar containers iniciarem
+# 12. Aguardar containers iniciarem
 print_info "Aguardando containers iniciarem..."
 sleep 30
 
-# 14. Obter informações do deploy
+# 13. Obter informações do deploy
 print_info "Obtendo informações do deploy..."
 APP_URL=$(az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
 
-# 15. Verificar status dos containers
+# 14. Verificar status dos containers
 print_info "Verificando status dos containers..."
 STATUS=$(az containerapp list --resource-group $RESOURCE_GROUP --query "[].{name:name,provisioningState:properties.provisioningState,state:properties.runningStatus}" -o table)
 echo "$STATUS"
 
-# 16. Mostrar informações de acesso
+# 15. Mostrar informações de acesso
 echo -e "${GREEN}"
 echo "🎉 ================================================"
 echo "   DEPLOY CONCLUÍDO COM SUCESSO!"
@@ -206,7 +201,7 @@ echo "API: https://$APP_URL/api/"
 echo "Login: https://$APP_URL/login"
 echo ""
 
-# 17. Testar aplicação
+# 16. Testar aplicação
 print_info "Testando aplicação..."
 if curl -s -f https://$APP_URL/ > /dev/null; then
     print_message "Aplicação está funcionando!"
