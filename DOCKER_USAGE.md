@@ -90,7 +90,7 @@ docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
 docker push challengemottuacr.azurecr.io/mottu-app:latest
 
 # 2. Deploy
-az aci compose create --resource-group mottu-rg --name mottu-compose --file docker-compose.yml
+./deploy-containerapp.sh challengemottuacr mottu-rg
 ```
 
 ## 🔧 **Configurações Avançadas**
@@ -138,93 +138,4 @@ curl http://localhost:8080/
 docker-compose exec mysql mysqladmin ping -h localhost -u root -p
 ```
 
-## 🆘 **Solução de Problemas**
 
-### **❌ Container não inicia**
-```bash
-# 1. Ver logs detalhados
-docker-compose logs app
-
-# 2. Verificar configurações
-docker-compose config
-
-# 3. Rebuild completo
-docker-compose down
-docker-compose up --build --force-recreate
-```
-
-### **❌ Erro de conexão com banco**
-```bash
-# 1. Verificar se MySQL está rodando
-docker-compose ps mysql
-
-# 2. Testar conexão
-docker-compose exec mysql mysql -u mottu -p
-
-# 3. Ver logs do MySQL
-docker-compose logs mysql
-```
-
-### **❌ Porta já em uso**
-```bash
-# 1. Parar containers existentes
-docker-compose down
-
-# 2. Verificar portas em uso
-netstat -tulpn | grep :8080
-netstat -tulpn | grep :3306
-
-# 3. Matar processo na porta
-sudo kill -9 $(lsof -t -i:8080)
-```
-
-### **❌ Problemas de permissão**
-```bash
-# 1. Verificar permissões do Docker
-sudo usermod -aG docker $USER
-
-# 2. Reiniciar Docker
-sudo systemctl restart docker
-
-# 3. Fazer logout e login novamente
-```
-
-## 🎯 **Dicas de Performance**
-
-### **Build Mais Rápido**
-```bash
-# Usar cache do Docker
-docker-compose build --parallel
-
-# Build apenas serviços alterados
-docker-compose up --build app
-```
-
-### **Otimizar Imagens**
-```bash
-# Ver tamanho das imagens
-docker images
-
-# Limpar cache
-docker builder prune
-```
-
-## 🔐 **Segurança**
-
-### **Credenciais Seguras**
-```bash
-# Usar arquivo .env
-echo "MYSQL_PASSWORD=MinhaSenhaSegura123!" > .env
-
-# Não commitar senhas
-echo ".env" >> .gitignore
-```
-
-### **Network Isolation**
-```yaml
-# No docker-compose.yml
-networks:
-  mottu-network:
-    driver: bridge
-    internal: false  # Para acesso externo
-```

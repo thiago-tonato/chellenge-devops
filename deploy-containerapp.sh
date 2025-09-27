@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 🚀 Script de Deploy Automatizado - Sistema Mottu
-# Uso: ./deploy-azure.sh <ACR_NAME> <RESOURCE_GROUP>
+# 🚀 Script de Deploy com Azure Container Apps - Sistema Mottu
+# Uso: ./deploy-containerapp.sh <ACR_NAME> <RESOURCE_GROUP>
 
 set -e
 
@@ -41,11 +41,12 @@ RESOURCE_GROUP=$2
 APP_NAME="mottu-app"
 MYSQL_NAME="mottu-mysql"
 LOCATION="eastus"
+ENVIRONMENT_NAME="mottu-environment"
 
 echo -e "${BLUE}"
 echo "🏍️  ================================================"
 echo "   Sistema de Rastreamento de Motos - Mottu"
-echo "   Deploy Automatizado no Azure"
+echo "   Deploy com Azure Container Apps"
 echo "=================================================="
 echo -e "${NC}"
 
@@ -53,6 +54,7 @@ print_info "Configurações:"
 echo "   ACR: $ACR_NAME"
 echo "   Resource Group: $RESOURCE_GROUP"
 echo "   Location: $LOCATION"
+echo "   Environment: $ENVIRONMENT_NAME"
 echo ""
 
 # 1. Verificar pré-requisitos
@@ -68,6 +70,12 @@ fi
 if ! command -v docker &> /dev/null; then
     print_error "Docker não encontrado. Instale: https://docs.docker.com/get-docker/"
     exit 1
+fi
+
+# Verificar extensão containerapp
+if ! az extension show --name containerapp &> /dev/null; then
+    print_info "Instalando extensão containerapp..."
+    az extension add --name containerapp
 fi
 
 print_message "Pré-requisitos verificados"
@@ -119,36 +127,57 @@ docker tag mysql:8.0 $ACR_NAME.azurecr.io/$MYSQL_NAME:latest
 docker push $ACR_NAME.azurecr.io/$MYSQL_NAME:latest
 print_message "Build e push do MySQL concluído"
 
-# 9. Instalar extensão ACI Compose
-print_info "Instalando extensão ACI Compose..."
-az extension add --name aci-compose --yes
-print_message "Extensão ACI Compose instalada"
-
-# 10. Deploy no Azure Container Instances
-print_info "Fazendo deploy no Azure Container Instances..."
-if az container show --resource-group $RESOURCE_GROUP --name mottu-compose &> /dev/null; then
-    print_warning "Container group 'mottu-compose' já existe. Removendo..."
-    az container delete --resource-group $RESOURCE_GROUP --name mottu-compose --yes
+# 9. Criar Container App Environment
+print_info "Criando Container App Environment..."
+if ! az containerapp env show --name $ENVIRONMENT_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
+    az containerapp env create --name $ENVIRONMENT_NAME --resource-group $RESOURCE_GROUP --location $LOCATION
+    print_message "Container App Environment '$ENVIRONMENT_NAME' criado"
+else
+    print_warning "Container App Environment '$ENVIRONMENT_NAME' já existe"
 fi
 
-az aci compose create --resource-group $RESOURCE_GROUP --name mottu-compose --file docker-compose.yml
-print_message "Deploy no Azure concluído"
+# 10. Obter credenciais do ACR
+print_info "Obtendo credenciais do ACR..."
+ACR_USERNAME=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "username" -o tsv)
+ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "passwords[0].value" -o tsv)
 
-# 11. Aguardar containers iniciarem
+# 11. Criar secret para ACR
+print_info "Criando secret para ACR..."
+az containerapp secret set --name acr-secret --resource-group $RESOURCE_GROUP --environment $ENVIRONMENT_NAME --secrets registry-password=$ACR_PASSWORD
+print_message "Secret do ACR criado"
+
+# 12. Deploy usando Container Apps Compose
+print_info "Fazendo deploy com Azure Container Apps..."
+if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
+    print_warning "Container App '$APP_NAME' já existe. Removendo..."
+    az containerapp delete --name $APP_NAME --resource-group $RESOURCE_GROUP --yes
+fi
+
+# Deploy usando docker-compose.yml
+az containerapp compose create \
+    --environment $ENVIRONMENT_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --compose-file-path docker-compose.yml \
+    --registry-server $ACR_NAME.azurecr.io \
+    --registry-username $ACR_USERNAME \
+    --registry-password secretref:acr-secret
+
+print_message "Deploy com Container Apps concluído"
+
+# 13. Aguardar containers iniciarem
 print_info "Aguardando containers iniciarem..."
 sleep 30
 
-# 12. Obter informações do deploy
+# 14. Obter informações do deploy
 print_info "Obtendo informações do deploy..."
-FQDN=$(az container show --resource-group $RESOURCE_GROUP --name mottu-compose --query "ipAddress.fqdn" -o tsv)
-IP_ADDRESS=$(az container show --resource-group $RESOURCE_GROUP --name mottu-compose --query "ipAddress.ip" -o tsv)
+APP_URL=$(az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
 
-# 13. Verificar status dos containers
+# 15. Verificar status dos containers
 print_info "Verificando status dos containers..."
-STATUS=$(az container show --resource-group $RESOURCE_GROUP --name mottu-compose --query "containers[].{name:name,state:instanceView.currentState.state}" -o table)
+STATUS=$(az containerapp list --resource-group $RESOURCE_GROUP --query "[].{name:name,provisioningState:properties.provisioningState,state:properties.runningStatus}" -o table)
 echo "$STATUS"
 
-# 14. Mostrar informações de acesso
+# 16. Mostrar informações de acesso
 echo -e "${GREEN}"
 echo "🎉 ================================================"
 echo "   DEPLOY CONCLUÍDO COM SUCESSO!"
@@ -157,14 +186,13 @@ echo -e "${NC}"
 
 echo -e "${BLUE}🌐 INFORMAÇÕES DE ACESSO:${NC}"
 echo "================================"
-echo "Aplicação Web: http://$FQDN:8080"
-echo "MySQL Database: $FQDN:3306"
-echo "IP Público: $IP_ADDRESS"
+echo "Aplicação Web: https://$APP_URL"
+echo "Environment: $ENVIRONMENT_NAME"
 echo ""
 
 echo -e "${BLUE}🔐 CREDENCIAIS DO BANCO:${NC}"
 echo "================================"
-echo "Host: $FQDN"
+echo "Host: $MYSQL_NAME.internal"
 echo "Port: 3306"
 echo "Username: mottu"
 echo "Password: FIAP@2tdsp!"
@@ -173,33 +201,18 @@ echo ""
 
 echo -e "${BLUE}📱 ENDPOINTS DA APLICAÇÃO:${NC}"
 echo "================================"
-echo "Home: http://$FQDN:8080/"
-echo "API: http://$FQDN:8080/api/"
-echo "Login: http://$FQDN:8080/login"
+echo "Home: https://$APP_URL/"
+echo "API: https://$APP_URL/api/"
+echo "Login: https://$APP_URL/login"
 echo ""
 
-# 15. Testar aplicação
+# 17. Testar aplicação
 print_info "Testando aplicação..."
-if curl -s -f http://$FQDN:8080/ > /dev/null; then
+if curl -s -f https://$APP_URL/ > /dev/null; then
     print_message "Aplicação está funcionando!"
 else
     print_warning "Aplicação ainda não está respondendo. Aguarde alguns minutos."
 fi
 
-# 16. Mostrar comandos úteis
-echo -e "${BLUE}📋 COMANDOS ÚTEIS:${NC}"
-echo "================================"
-echo "Ver logs da aplicação:"
-echo "  az container logs --resource-group $RESOURCE_GROUP --name mottu-compose --container-name $APP_NAME"
-echo ""
-echo "Ver logs do MySQL:"
-echo "  az container logs --resource-group $RESOURCE_GROUP --name mottu-compose --container-name $MYSQL_NAME"
-echo ""
-echo "Reiniciar containers:"
-echo "  az container restart --resource-group $RESOURCE_GROUP --name mottu-compose"
-echo ""
-echo "Deletar recursos:"
-echo "  az group delete --name $RESOURCE_GROUP --yes --no-wait"
-echo ""
 
-echo -e "${GREEN}✨ Deploy concluído! Sua aplicação está disponível em: http://$FQDN:8080${NC}"
+echo -e "${GREEN}✨ Deploy concluído! Sua aplicação está disponível em: https://$APP_URL${NC}"

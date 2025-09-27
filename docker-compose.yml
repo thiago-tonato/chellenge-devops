@@ -4,8 +4,6 @@ services:
   # Banco de dados MySQL
   mysql:
     image: mysql:8.0
-    container_name: mottu-mysql
-    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: mottu
@@ -16,19 +14,10 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
-    networks:
-      - mottu-network
 
   # Aplicação Spring Boot
   app:
-    # Para desenvolvimento local: use build
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # Para produção no Azure: descomente a linha abaixo e comente o build
-    # image: ${ACR_NAME:-challengemottuacr}.azurecr.io/mottu-app:latest
-    container_name: mottu-app
-    restart: unless-stopped
+    image: challengemottuacr.azurecr.io/mottu-app:latest
     ports:
       - "8080:8080"
     environment:
@@ -39,19 +28,10 @@ services:
       SPRING_FLYWAY_URL: jdbc:mysql://mysql:3306/mottu?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_FLYWAY_USER: mottu
       SPRING_FLYWAY_PASSWORD: FIAP@2tdsp!
-      # Configurações para acesso externo
       SERVER_ADDRESS: 0.0.0.0
       SERVER_PORT: 8080
     depends_on:
-      mysql:
-        condition: service_started
-    networks:
-      - mottu-network
+      - mysql
 
 volumes:
   mysql_data:
-    driver: local
-
-networks:
-  mottu-network:
-    driver: bridge

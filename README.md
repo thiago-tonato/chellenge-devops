@@ -21,7 +21,7 @@ docker-compose up --build
 ### **Opção 2: Deploy no Azure (Produção)**
 ```bash
 # 1. Execute o script de deploy
-./deploy-azure.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh challengemottuacr mottu-rg
 
 # 2. Aguarde o deploy (2-3 minutos)
 # 3. Acesse usando o endereço fornecido pelo script
@@ -131,32 +131,3 @@ az container show --resource-group mottu-rg --name mottu-compose
 | `/api/sensores` | GET | Listar sensores |
 | `/api/alocacoes` | GET | Listar alocações |
 | `/api/manutencoes` | GET | Listar manutenções |
-
-## 🆘 **Problemas Comuns**
-
-### **❌ Container não inicia**
-```bash
-# Ver logs
-docker-compose logs app
-
-# Verificar portas
-netstat -tulpn | grep :8080
-```
-
-### **❌ Erro de conexão com banco**
-```bash
-# Verificar MySQL
-docker-compose logs mysql
-
-# Testar conexão
-mysql -h localhost -P 3306 -u mottu -p
-```
-
-### **❌ Deploy falha no Azure**
-```bash
-# Ver logs do Azure
-az container logs --resource-group mottu-rg --name mottu-compose
-
-# Verificar recursos
-az group list
-```

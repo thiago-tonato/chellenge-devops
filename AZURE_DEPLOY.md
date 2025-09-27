@@ -5,21 +5,21 @@
 ## 🎯 **Visão Geral**
 
 Este guia mostra como fazer deploy da aplicação Mottu no Azure usando:
-- **Azure Container Instances (ACI)** - Para executar os containers
+- **Azure Container Apps** - Para executar os containers (solução moderna e robusta)
 - **Azure Container Registry (ACR)** - Para armazenar as imagens
-- **Azure Database for MySQL** - Para banco de dados (opcional)
+- **Azure Container App Environment** - Para gerenciar o ambiente
 
 ## 🚀 **Início Rápido**
 
 ### **Método 1: Script Automatizado (Recomendado)**
 ```bash
 # Deploy completo em 3 comandos
-./deploy-azure.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh challengemottuacr mottu-rg
 
 # O script faz tudo automaticamente:
 # ✅ Cria recursos no Azure
 # ✅ Build e push das imagens
-# ✅ Deploy da aplicação
+# ✅ Deploy com Container Apps
 # ✅ Mostra informações de acesso
 ```
 
@@ -108,79 +108,37 @@ docker push challengemottuacr.azurecr.io/mottu-mysql:latest
 
 ## 🚀 **Passo 3: Deploy no Azure**
 
-### **3.1 Deploy usando Docker Compose (Recomendado)**
+### **3.1 Deploy usando Azure Container Apps (Recomendado)**
 ```bash
-# Instalar extensão ACI Compose
-az extension add --name aci-compose
+# Deploy usando Docker Compose (método atual)
+az containerapp compose create \
+    --environment mottu-environment \
+    --resource-group mottu-rg \
+    --compose-file-path docker-compose.yml \
+    --registry-server challengemottuacr.azurecr.io \
+    --registry-username challengemottuacr \
+    --registry-password secretref:acr-secret
 
-# Deploy completo
-az aci compose create --resource-group mottu-rg --name mottu-compose --file docker-compose.yml
+# Ou usar o script automatizado
+./deploy-containerapp.sh challengemottuacr mottu-rg
 ```
 
-### **3.2 Deploy usando YAML (Alternativo)**
+### **3.2 Deploy Manual (Para aprendizado)**
 ```bash
-# Criar arquivo de configuração
-cat > aci-deploy.yaml << EOF
-apiVersion: 2021-07-01
-location: eastus
-name: mottu-app
-properties:
-  containers:
-  - name: mottu-app
-    properties:
-      image: challengemottuacr.azurecr.io/mottu-app:latest
-      resources:
-        requests:
-          cpu: 1
-          memoryInGb: 2
-      ports:
-      - port: 8080
-        protocol: TCP
-      environmentVariables:
-      - name: SPRING_PROFILES_ACTIVE
-        value: docker
-      - name: SPRING_DATASOURCE_URL
-        value: jdbc:mysql://mottu-mysql:3306/mottu?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      - name: SPRING_DATASOURCE_USERNAME
-        value: mottu
-      - name: SPRING_DATASOURCE_PASSWORD
-        value: FIAP@2tdsp!
-  - name: mottu-mysql
-    properties:
-      image: challengemottuacr.azurecr.io/mottu-mysql:latest
-      resources:
-        requests:
-          cpu: 1
-          memoryInGb: 2
-      ports:
-      - port: 3306
-        protocol: TCP
-      environmentVariables:
-      - name: MYSQL_ROOT_PASSWORD
-        value: rootpassword
-      - name: MYSQL_DATABASE
-        value: mottu
-      - name: MYSQL_USER
-        value: mottu
-      - name: MYSQL_PASSWORD
-        value: FIAP@2tdsp!
-  osType: Linux
-  ipAddress:
-    type: Public
-    ports:
-    - protocol: TCP
-      port: 8080
-    - protocol: TCP
-      port: 3306
-    dnsNameLabel: mottu-app
-  imageRegistryCredentials:
-  - server: challengemottuacr.azurecr.io
-    username: challengemottuacr
-    password: <PASSWORD_DO_ACR>
-EOF
+# 1. Criar Container App Environment
+az containerapp env create --name mottu-environment --resource-group mottu-rg --location eastus
 
-# Deploy
-az container create --resource-group mottu-rg --file aci-deploy.yaml
+# 2. Criar secret para ACR
+az containerapp secret set --name acr-secret --resource-group mottu-rg --environment mottu-environment --secrets registry-password=<ACR_PASSWORD>
+
+# 3. Deploy usando compose
+az containerapp compose create \
+    --environment mottu-environment \
+    --resource-group mottu-rg \
+    --compose-file-path docker-compose.yml \
+    --registry-server challengemottuacr.azurecr.io \
+    --registry-username challengemottuacr \
+    --registry-password secretref:acr-secret
 ```
 
 ## 📊 **Passo 4: Verificar Deploy**
@@ -255,54 +213,4 @@ az monitor autoscale create \
   --count 2
 ```
 
-## 🛠️ **Comandos Úteis**
 
-### **Gerenciamento de Containers**
-```bash
-# Ver status
-az container show --resource-group mottu-rg --name mottu-compose
-
-# Reiniciar
-az container restart --resource-group mottu-rg --name mottu-compose
-
-# Deletar
-az container delete --resource-group mottu-rg --name mottu-compose --yes
-```
-
-### **Gerenciamento de Recursos**
-```bash
-# Listar recursos
-az resource list --resource-group mottu-rg
-
-# Deletar grupo de recursos
-az group delete --name mottu-rg --yes --no-wait
-```
-
-## 🆘 **Solução de Problemas**
-
-### **❌ Deploy falha**
-```bash
-# Ver logs de erro
-az container logs --resource-group mottu-rg --name mottu-compose
-
-# Verificar configuração
-az container show --resource-group mottu-rg --name mottu-compose --query "containers[0].instanceView.events"
-```
-
-### **❌ Container não inicia**
-```bash
-# Ver logs detalhados
-az container logs --resource-group mottu-rg --name mottu-compose --container-name mottu-app
-
-# Verificar variáveis de ambiente
-az container show --resource-group mottu-rg --name mottu-compose --query "containers[0].environmentVariables"
-```
-
-### **❌ Erro de conexão com banco**
-```bash
-# Verificar status do MySQL
-az container logs --resource-group mottu-rg --name mottu-compose --container-name mottu-mysql
-
-# Testar conectividade
-telnet mottu-compose.eastus.azurecontainer.io 3306
-```
