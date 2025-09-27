@@ -22,16 +22,16 @@ Após fazer o deploy no Azure, sua aplicação fica disponível publicamente na 
 ### **Método 2: Comando Manual**
 ```bash
 # Obter endereço da aplicação
-az containerapp show --name mottu-app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv
+az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv
 
-# Exemplo de saída: mottu-app.azurecontainerapps.io
+# Exemplo de saída: app.xxxxx.eastus.azurecontainerapps.io
 ```
 
 ## 🌐 **Acesso à Aplicação Web**
 
 ### **Endereço da Aplicação**
 ```
-https://mottu-app.azurecontainerapps.io
+https://app.calmbay-db261553.eastus.azurecontainerapps.io
 ```
 
 ### **Endpoints Disponíveis**
@@ -44,20 +44,20 @@ https://mottu-app.azurecontainerapps.io
 ### **Testar Acesso**
 ```bash
 # Teste básico
-curl https://mottu-app.azurecontainerapps.io/
+curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/
 
 # Teste de página inicial
-curl https://mottu-app.azurecontainerapps.io/
+curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/
 
 # Teste de API
-curl https://mottu-app.azurecontainerapps.io/api/motos
+curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/api/motos
 ```
 
 ## 🗄️ **Acesso ao Banco de Dados MySQL**
 
 ### **Configurações de Conexão**
 ```
-🌐 Host: mottu-mysql.internal (interno)
+🌐 Host: mysql.internal (interno)
 🔌 Porta: 3306
 👤 Usuário: mottu
 🔑 Senha: FIAP@2tdsp!
@@ -67,7 +67,7 @@ curl https://mottu-app.azurecontainerapps.io/api/motos
 ### **Conectar via Linha de Comando**
 ```bash
 # Conectar ao MySQL (apenas de dentro do Container App)
-az containerapp exec --name mottu-mysql --resource-group mottu-rg --command "mysql -u mottu -p"
+az containerapp exec --name mysql --resource-group mottu-rg --command "mysql -u mottu -p"
 
 # Digite a senha quando solicitado: FIAP@2tdsp!
 
@@ -95,18 +95,18 @@ SHOW TABLES;
 az containerapp list --resource-group mottu-rg --query "[].{name:name,provisioningState:properties.provisioningState,state:properties.runningStatus}"
 
 # Ver logs da aplicação
-az containerapp logs show --name mottu-app --resource-group mottu-rg
+az containerapp logs show --name app --resource-group mottu-rg
 
 # Ver logs do MySQL
-az containerapp logs show --name mottu-mysql --resource-group mottu-rg
+az containerapp logs show --name mysql --resource-group mottu-rg
 ```
 
 ### **Testar Conectividade**
 ```bash
 # Testar aplicação
-curl -I https://mottu-app.azurecontainerapps.io/
+curl -I https://app.calmbay-db261553.eastus.azurecontainerapps.io/
 
 # Testar MySQL (apenas interno)
-az containerapp exec --name mottu-mysql --resource-group mottu-rg --command "mysqladmin ping"
+az containerapp exec --name mysql --resource-group mottu-rg --command "mysqladmin ping"
 ```
 

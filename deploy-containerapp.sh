@@ -38,8 +38,8 @@ fi
 
 ACR_NAME=$1
 RESOURCE_GROUP=$2
-APP_NAME="mottu-app"
-MYSQL_NAME="mottu-mysql"
+APP_NAME="app"
+MYSQL_NAME="mysql"
 LOCATION="eastus"
 ENVIRONMENT_NAME="mottu-environment"
 
@@ -143,9 +143,9 @@ ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURC
 
 # 11. Deploy usando Container Apps Compose
 print_info "Fazendo deploy com Azure Container Apps..."
-if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
-    print_warning "Container App '$APP_NAME' já existe. Removendo..."
-    az containerapp delete --name $APP_NAME --resource-group $RESOURCE_GROUP --yes
+if az containerapp show --name app --resource-group $RESOURCE_GROUP &> /dev/null; then
+    print_warning "Container App 'app' já existe. Removendo..."
+    az containerapp delete --name app --resource-group $RESOURCE_GROUP --yes
 fi
 
 # Deploy usando docker-compose.yml
@@ -165,7 +165,7 @@ sleep 30
 
 # 13. Obter informações do deploy
 print_info "Obtendo informações do deploy..."
-APP_URL=$(az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
+APP_URL=$(az containerapp show --name app --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
 
 # 14. Verificar status dos containers
 print_info "Verificando status dos containers..."
@@ -187,7 +187,7 @@ echo ""
 
 echo -e "${BLUE}🔐 CREDENCIAIS DO BANCO:${NC}"
 echo "================================"
-echo "Host: $MYSQL_NAME.internal"
+echo "Host: mysql.internal"
 echo "Port: 3306"
 echo "Username: mottu"
 echo "Password: FIAP@2tdsp!"
