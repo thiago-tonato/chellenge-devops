@@ -14,7 +14,7 @@ spring:
       on-profile: docker
 
   datasource:
-    url: jdbc:mysql://mottumysqlsrv.mysql.database.azure.com:3306/mottu?useSSL=true&requireSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC&verifyServerCertificate=false
+    url: jdbc:mysql://mottumysqlsrv.mysql.database.azure.com:3306/mottu?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&verifyServerCertificate=false
     username: mottuadmin
     password: FIAP@2tdsp!
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,7 +31,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    url: jdbc:mysql://mottumysqlsrv.mysql.database.azure.com:3306/mottu?useSSL=true&requireSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC&verifyServerCertificate=false
+    url: jdbc:mysql://mottumysqlsrv.mysql.database.azure.com:3306/mottu?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&verifyServerCertificate=false
     user: mottuadmin
     password: FIAP@2tdsp!
     validate-on-migrate: false
