@@ -125,14 +125,9 @@ az mysql flexible-server db create \
     --database-name $MYSQL_DATABASE
 print_message "Database '$MYSQL_DATABASE' criado"
 
-# Esperar MySQL ficar pronto
-MYSQL_FQDN=$(az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP --query "fullyQualifiedDomainName" -o tsv)
+# Aguardar MySQL ficar pronto
 print_info "Aguardando MySQL ficar disponível..."
-until mysqladmin ping -h "$MYSQL_FQDN" -u"$MYSQL_ADMIN_USER" -p"$MYSQL_ADMIN_PASSWORD" --silent; do
-  print_info "MySQL ainda não está pronto, aguardando 10s..."
-  sleep 10
-done
-print_message "MySQL pronto para conexões"
+sleep 30
 
 # 9. Environment
 print_info "Criando Container App Environment..."
