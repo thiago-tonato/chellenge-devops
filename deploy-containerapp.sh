@@ -24,7 +24,9 @@ RESOURCE_GROUP="mottu-rg"
 APP_NAME="app"
 LOCATION="eastus"
 ENVIRONMENT_NAME="mottu-environment"
-MYSQL_SERVER_NAME="mottumysqlsrv$RANDOM"
+
+# MySQL fixo
+MYSQL_SERVER_NAME="mottumysqlsrv"
 MYSQL_ADMIN_USER="mottuadmin"
 MYSQL_ADMIN_PASSWORD="FIAP@2tdsp!"
 MYSQL_DATABASE="mottu"
@@ -123,6 +125,15 @@ az mysql flexible-server db create \
     --database-name $MYSQL_DATABASE
 print_message "Database '$MYSQL_DATABASE' criado"
 
+# Esperar MySQL ficar pronto
+MYSQL_FQDN=$(az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP --query "fullyQualifiedDomainName" -o tsv)
+print_info "Aguardando MySQL ficar disponível..."
+until mysqladmin ping -h "$MYSQL_FQDN" -u"$MYSQL_ADMIN_USER" -p"$MYSQL_ADMIN_PASSWORD" --silent; do
+  print_info "MySQL ainda não está pronto, aguardando 10s..."
+  sleep 10
+done
+print_message "MySQL pronto para conexões"
+
 # 9. Environment
 print_info "Criando Container App Environment..."
 if ! az containerapp env show --name $ENVIRONMENT_NAME --resource-group $RESOURCE_GROUP &>/dev/null; then
@@ -139,7 +150,6 @@ ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURC
 
 # 11. Deploy/Update do App
 print_info "Fazendo deploy do App..."
-MYSQL_FQDN=$(az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP --query "fullyQualifiedDomainName" -o tsv)
 
 if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &>/dev/null; then
     print_info "Atualizando Container App existente..."
@@ -147,7 +157,8 @@ if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &>/dev
         --name $APP_NAME \
         --resource-group $RESOURCE_GROUP \
         --image $ACR_NAME.azurecr.io/$APP_NAME:latest \
-        --set-env-vars SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+        --set-env-vars SPRING_PROFILES_ACTIVE=docker \
+                       SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
                        SPRING_DATASOURCE_USERNAME="$MYSQL_ADMIN_USER" \
                        SPRING_DATASOURCE_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
                        SPRING_FLYWAY_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
@@ -166,7 +177,8 @@ else
         --registry-server $ACR_NAME.azurecr.io \
         --registry-username $ACR_USERNAME \
         --registry-password $ACR_PASSWORD \
-        --env-vars SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+        --env-vars SPRING_PROFILES_ACTIVE=docker \
+                   SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
                    SPRING_DATASOURCE_USERNAME="$MYSQL_ADMIN_USER" \
                    SPRING_DATASOURCE_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
                    SPRING_FLYWAY_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
@@ -207,8 +219,4 @@ echo "Password: $MYSQL_ADMIN_PASSWORD"
 echo "Database: $MYSQL_DATABASE"
 echo ""
 
-echo -e "${BLUE}📱 ENDPOINTS DA APLICAÇÃO:${NC}"
-echo "Home: https://$APP_URL/"
-echo "API: https://$APP_URL/api/"
-echo "Login: https://$APP_URL/login"
-echo ""
+echo -e "${BLUE}📱 ENDPOINTS DA APLICAÇÃO:${
