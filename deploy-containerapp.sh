@@ -22,7 +22,7 @@ print_info()    { echo -e "${BLUE}ℹ️  $1${NC}"; }
 ACR_NAME="challengemottuacr"
 RESOURCE_GROUP="mottu-rg"
 APP_NAME="app"
-LOCATION="brazilsouth"
+LOCATION="westus2"
 ENVIRONMENT_NAME="mottu-environment"
 
 # MySQL fixo
@@ -109,8 +109,8 @@ if ! az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $R
         --admin-password $MYSQL_ADMIN_PASSWORD \
         --sku-name Standard_B1ms \
         --tier Burstable \
-        --public-access 0.0.0.0-255.255.255.255 \
-        --storage-size 20 \
+        --public-access 0.0.0.0 \
+        --storage-size 32
 
     print_message "Servidor MySQL '$MYSQL_SERVER_NAME' criado"
 else
