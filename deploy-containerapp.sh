@@ -213,5 +213,3 @@ echo "Username: $MYSQL_ADMIN_USER"
 echo "Password: $MYSQL_ADMIN_PASSWORD"
 echo "Database: $MYSQL_DATABASE"
 echo ""
-
-echo -e "${BLUE}📱 ENDPOINTS DA APLICAÇÃO:${
