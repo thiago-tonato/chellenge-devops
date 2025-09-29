@@ -22,9 +22,12 @@ print_info()    { echo -e "${BLUE}ℹ️  $1${NC}"; }
 ACR_NAME="challengemottuacr"
 RESOURCE_GROUP="mottu-rg"
 APP_NAME="app"
-MYSQL_NAME="mysql"
 LOCATION="eastus"
 ENVIRONMENT_NAME="mottu-environment"
+MYSQL_SERVER_NAME="mottumysqlsrv$RANDOM"
+MYSQL_ADMIN_USER="mottuadmin"
+MYSQL_ADMIN_PASSWORD="FIAP@2tdsp!"
+MYSQL_DATABASE="mottu"
 
 echo -e "${BLUE}"
 echo "🏍️  ================================================"
@@ -38,6 +41,7 @@ echo "   ACR: $ACR_NAME"
 echo "   Resource Group: $RESOURCE_GROUP"
 echo "   Location: $LOCATION"
 echo "   Environment: $ENVIRONMENT_NAME"
+echo "   MySQL Server: $MYSQL_SERVER_NAME"
 echo ""
 
 # 1. Pré-requisitos
@@ -91,12 +95,33 @@ print_info "Fazendo push da imagem da aplicação..."
 docker push $ACR_NAME.azurecr.io/$APP_NAME:latest
 print_message "Push da aplicação concluído"
 
-# 8. MySQL (imagem no ACR)
-print_info "Publicando imagem do MySQL no ACR..."
-docker pull mysql:8.0
-docker tag mysql:8.0 $ACR_NAME.azurecr.io/$MYSQL_NAME:latest
-docker push $ACR_NAME.azurecr.io/$MYSQL_NAME:latest
-print_message "Imagem MySQL publicada no ACR"
+# 8. MySQL (Azure Database for MySQL Flexible Server)
+print_info "Criando Azure Database for MySQL Flexible Server..."
+
+if ! az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP &>/dev/null; then
+    az mysql flexible-server create \
+        --name $MYSQL_SERVER_NAME \
+        --resource-group $RESOURCE_GROUP \
+        --location $LOCATION \
+        --admin-user $MYSQL_ADMIN_USER \
+        --admin-password $MYSQL_ADMIN_PASSWORD \
+        --sku-name Standard_B1ms \
+        --storage-size 32 \
+        --version 8.0 \
+        --public-access all
+
+    print_message "Servidor MySQL '$MYSQL_SERVER_NAME' criado"
+else
+    print_warning "Servidor MySQL '$MYSQL_SERVER_NAME' já existe"
+fi
+
+# Criar banco dentro do servidor
+print_info "Criando database '$MYSQL_DATABASE'..."
+az mysql flexible-server db create \
+    --resource-group $RESOURCE_GROUP \
+    --server-name $MYSQL_SERVER_NAME \
+    --database-name $MYSQL_DATABASE
+print_message "Database '$MYSQL_DATABASE' criado"
 
 # 9. Environment
 print_info "Criando Container App Environment..."
@@ -112,39 +137,22 @@ print_info "Obtendo credenciais do ACR..."
 ACR_USERNAME=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "username" -o tsv)
 ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "passwords[0].value" -o tsv)
 
-# 11. Deploy/Update do MySQL
-print_info "Fazendo deploy do MySQL..."
-if az containerapp show --name $MYSQL_NAME --resource-group $RESOURCE_GROUP &>/dev/null; then
-    print_info "Atualizando Container App MySQL existente..."
-    az containerapp update \
-        --name $MYSQL_NAME \
-        --resource-group $RESOURCE_GROUP \
-        --image $ACR_NAME.azurecr.io/$MYSQL_NAME:latest
-    print_message "MySQL Container App atualizado"
-else
-    print_info "Criando novo Container App MySQL..."
-    az containerapp up \
-        --name $MYSQL_NAME \
-        --resource-group $RESOURCE_GROUP \
-        --environment $ENVIRONMENT_NAME \
-        --image $ACR_NAME.azurecr.io/$MYSQL_NAME:latest \
-        --target-port 3306 \
-        --ingress internal \
-        --registry-server $ACR_NAME.azurecr.io \
-        --registry-username $ACR_USERNAME \
-        --registry-password $ACR_PASSWORD \
-        --env-vars MYSQL_ROOT_PASSWORD=rootpassword MYSQL_DATABASE=mottu MYSQL_USER=mottu MYSQL_PASSWORD=FIAP@2tdsp!
-    print_message "MySQL Container App criado"
-fi
-
-# 12. Deploy/Update do App
+# 11. Deploy/Update do App
 print_info "Fazendo deploy do App..."
+MYSQL_FQDN=$(az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP --query "fullyQualifiedDomainName" -o tsv)
+
 if az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP &>/dev/null; then
     print_info "Atualizando Container App existente..."
     az containerapp update \
         --name $APP_NAME \
         --resource-group $RESOURCE_GROUP \
-        --image $ACR_NAME.azurecr.io/$APP_NAME:latest
+        --image $ACR_NAME.azurecr.io/$APP_NAME:latest \
+        --set-env-vars SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                       SPRING_DATASOURCE_USERNAME="$MYSQL_ADMIN_USER" \
+                       SPRING_DATASOURCE_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
+                       SPRING_FLYWAY_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                       SPRING_FLYWAY_USER="$MYSQL_ADMIN_USER" \
+                       SPRING_FLYWAY_PASSWORD="$MYSQL_ADMIN_PASSWORD"
     print_message "Container App atualizado"
 else
     print_info "Criando novo Container App..."
@@ -158,28 +166,28 @@ else
         --registry-server $ACR_NAME.azurecr.io \
         --registry-username $ACR_USERNAME \
         --registry-password $ACR_PASSWORD \
-        --env-vars SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_NAME:3306/mottu?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
-                   SPRING_DATASOURCE_USERNAME="mottu" \
-                   SPRING_DATASOURCE_PASSWORD="FIAP@2tdsp!" \
-                   SPRING_FLYWAY_URL="jdbc:mysql://$MYSQL_NAME:3306/mottu?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
-                   SPRING_FLYWAY_USER="mottu" \
-                   SPRING_FLYWAY_PASSWORD="FIAP@2tdsp!"
+        --env-vars SPRING_DATASOURCE_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                   SPRING_DATASOURCE_USERNAME="$MYSQL_ADMIN_USER" \
+                   SPRING_DATASOURCE_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
+                   SPRING_FLYWAY_URL="jdbc:mysql://$MYSQL_FQDN:3306/$MYSQL_DATABASE?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                   SPRING_FLYWAY_USER="$MYSQL_ADMIN_USER" \
+                   SPRING_FLYWAY_PASSWORD="$MYSQL_ADMIN_PASSWORD"
     print_message "Container App criado"
 fi
 
-# 13. Aguardar containers
+# 12. Aguardar containers
 print_info "Aguardando containers iniciarem..."
 sleep 30
 
-# 14. Infos do deploy
+# 13. Infos do deploy
 print_info "Obtendo informações do deploy..."
 APP_URL=$(az containerapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
 
-# 15. Status
+# 14. Status
 print_info "Verificando status dos containers..."
 az containerapp list --resource-group $RESOURCE_GROUP --query "[].{name:name,provisioningState:properties.provisioningState,state:properties.runningStatus}" -o table
 
-# 16. Infos finais
+# 15. Infos finais
 echo -e "${GREEN}"
 echo "🎉 ================================================"
 echo "   DEPLOY CONCLUÍDO COM SUCESSO!"
@@ -192,11 +200,11 @@ echo "Environment: $ENVIRONMENT_NAME"
 echo ""
 
 echo -e "${BLUE}🔐 CREDENCIAIS DO BANCO:${NC}"
-echo "Host interno: $MYSQL_NAME"
+echo "Servidor MySQL: $MYSQL_SERVER_NAME.mysql.database.azure.com"
 echo "Port: 3306"
-echo "Username: mottu"
-echo "Password: FIAP@2tdsp!"
-echo "Database: mottu"
+echo "Username: $MYSQL_ADMIN_USER"
+echo "Password: $MYSQL_ADMIN_PASSWORD"
+echo "Database: $MYSQL_DATABASE"
 echo ""
 
 echo -e "${BLUE}📱 ENDPOINTS DA APLICAÇÃO:${NC}"
@@ -204,5 +212,3 @@ echo "Home: https://$APP_URL/"
 echo "API: https://$APP_URL/api/"
 echo "Login: https://$APP_URL/login"
 echo ""
-
-# 17. Testar
