@@ -24,14 +24,14 @@ Após fazer o deploy no Azure, sua aplicação fica disponível publicamente na 
 # Obter endereço da aplicação
 az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv
 
-# Exemplo de saída: app.xxxxx.eastus.azurecontainerapps.io
+# Exemplo de saída: app.xxxxx.westus2.azurecontainerapps.io
 ```
 
 ## 🌐 **Acesso à Aplicação Web**
 
 ### **Endereço da Aplicação**
 ```
-https://app.calmbay-db261553.eastus.azurecontainerapps.io
+https://app.xxxxx.westus2.azurecontainerapps.io
 ```
 
 ### **Endpoints Disponíveis**
@@ -43,31 +43,34 @@ https://app.calmbay-db261553.eastus.azurecontainerapps.io
 
 ### **Testar Acesso**
 ```bash
+# Obter URL da aplicação
+APP_URL=$(az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv)
+
 # Teste básico
-curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/
+curl https://$APP_URL/
 
 # Teste de página inicial
-curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/
+curl https://$APP_URL/
 
 # Teste de API
-curl https://app.calmbay-db261553.eastus.azurecontainerapps.io/api/motos
+curl https://$APP_URL/api/motos
 ```
 
 ## 🗄️ **Acesso ao Banco de Dados MySQL**
 
 ### **Configurações de Conexão**
 ```
-🌐 Host: mysql.internal (interno)
+🌐 Host: mottumysqlsrv.mysql.database.azure.com
 🔌 Porta: 3306
-👤 Usuário: mottu
+👤 Usuário: mottuadmin
 🔑 Senha: FIAP@2tdsp!
 🗃️ Database: mottu
 ```
 
 ### **Conectar via Linha de Comando**
 ```bash
-# Conectar ao MySQL (apenas de dentro do Container App)
-az containerapp exec --name mysql --resource-group mottu-rg --command "mysql -u mottu -p"
+# Conectar ao Azure Database for MySQL Flexible Server
+mysql -h mottumysqlsrv.mysql.database.azure.com -u mottuadmin -p
 
 # Digite a senha quando solicitado: FIAP@2tdsp!
 
@@ -80,12 +83,18 @@ SHOW TABLES;
 ### **Conectar via Ferramentas Gráficas**
 
 #### **🔧 MySQL Workbench**
-> **Nota**: O banco MySQL não é acessível externamente no Container Apps por segurança. Use o comando `az containerapp exec` para acessar.
+1. Abra o MySQL Workbench
+2. Configure nova conexão:
+   - Host: `mottumysqlsrv.mysql.database.azure.com`
+   - Port: `3306`
+   - Username: `mottuadmin`
+   - Password: `FIAP@2tdsp!`
+   - Database: `mottu`
 
 #### **🔧 Azure Data Studio**
 1. Abra o Azure Data Studio
 2. Use a extensão MySQL
-3. Configure via comando `az containerapp exec` para acessar o banco
+3. Configure a conexão com as credenciais acima
 
 ## 📊 **Monitoramento e Verificação**
 
@@ -97,16 +106,19 @@ az containerapp list --resource-group mottu-rg --query "[].{name:name,provisioni
 # Ver logs da aplicação
 az containerapp logs show --name app --resource-group mottu-rg
 
-# Ver logs do MySQL
-az containerapp logs show --name mysql --resource-group mottu-rg
+# Ver logs do MySQL (Azure Database for MySQL Flexible Server)
+az mysql flexible-server logs list --resource-group mottu-rg --server-name mottumysqlsrv
 ```
 
 ### **Testar Conectividade**
 ```bash
-# Testar aplicação
-curl -I https://app.calmbay-db261553.eastus.azurecontainerapps.io/
+# Obter URL da aplicação
+APP_URL=$(az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv)
 
-# Testar MySQL (apenas interno)
-az containerapp exec --name mysql --resource-group mottu-rg --command "mysqladmin ping"
+# Testar aplicação
+curl -I https://$APP_URL/
+
+# Testar MySQL (Azure Database for MySQL Flexible Server)
+mysqladmin ping -h mottumysqlsrv.mysql.database.azure.com -u mottuadmin -p
 ```
 

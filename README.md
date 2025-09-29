@@ -23,8 +23,9 @@ docker-compose up --build
 # 1. Execute o script de deploy
 ./deploy-containerapp.sh
 
-# 2. Aguarde o deploy (2-3 minutos)
+# 2. Aguarde o deploy (3-5 minutos)
 # 3. Acesse usando o endereço fornecido pelo script
+# 4. A aplicação usará Azure Database for MySQL Flexible Server
 ```
 
 ## 📋 **O que você precisa**
@@ -40,11 +41,22 @@ docker-compose up --build
 
 ## 🏗️ **Arquitetura do Sistema**
 
+### **Desenvolvimento Local:**
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │   Database      │
 │   (Thymeleaf)   │◄──►│   (Spring Boot) │◄──►│   (MySQL)       │
 │   Port: 8080    │    │   Port: 8080    │    │   Port: 3306    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **Produção (Azure):**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (Thymeleaf)   │◄──►│   (Spring Boot) │◄──►│   (Azure MySQL) │
+│   Container App │    │   Container App │    │   Flexible Svr  │
+│   Environment   │    │   Environment   │    │   (Gerenciado)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -65,7 +77,7 @@ docker-compose up --build
 | **Spring Boot** | 3.4.5 | Framework web |
 | **MySQL** | 8.0 | Banco de dados |
 | **Docker** | Latest | Containerização |
-| **Azure ACI** | - | Orquestração na nuvem |
+| **Azure Container Apps** | - | Orquestração na nuvem |
 | **Flyway** | 10.22.0 | Migração de banco |
 
 ## 📁 **Estrutura do Projeto**
@@ -74,7 +86,7 @@ docker-compose up --build
 api-rest-mottu/
 ├── 🐳 Dockerfile              # Imagem da aplicação
 ├── 🐳 docker-compose.yml      # Orquestração local
-├── 🚀 deploy-azure.sh         # Deploy no Azure
+├── 🚀 deploy-containerapp.sh   # Deploy no Azure Container Apps
 ├── 📚 README.md               # Este arquivo
 ├── 📖 DOCKER_USAGE.md         # Guia do Docker
 ├── 🌐 ACESSO_EXTERNO.md       # Acesso remoto
@@ -103,23 +115,23 @@ docker-compose down
 ### **2. Deploy no Azure**
 ```bash
 # Deploy automático
-./deploy-azure.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh
 
 # Ver status
-az container show --resource-group mottu-rg --name mottu-compose
+az containerapp list --resource-group mottu-rg
 ```
 
 ## 🔐 **Credenciais Padrão**
 
 ### **Banco de Dados:**
-- **Host**: `localhost` (local) ou `<FQDN>` (Azure)
+- **Host**: `localhost` (local) ou `mottumysqlsrv.mysql.database.azure.com` (Azure)
 - **Porta**: `3306`
-- **Usuário**: `mottu`
+- **Usuário**: `mottu` (local) ou `mottuadmin` (Azure)
 - **Senha**: `FIAP@2tdsp!`
 - **Database**: `mottu`
 
 ### **Aplicação:**
-- **URL**: `http://localhost:8080` (local) ou `http://<FQDN>:8080` (Azure)
+- **URL**: `http://localhost:8080` (local) ou `https://<FQDN>` (Azure Container Apps)
 - **Login**: Configure no sistema
 
 ## 📱 **Endpoints da API**

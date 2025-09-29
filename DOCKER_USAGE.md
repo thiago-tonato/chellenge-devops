@@ -74,20 +74,21 @@ docker system df
 ### **Método 1: Script Automatizado (Recomendado)**
 ```bash
 # Deploy completo
-./deploy-azure.sh challengemottuacr mottu-rg
+./deploy-containerapp.sh
 
 # O script faz tudo automaticamente:
 # ✅ Build da imagem
 # ✅ Push para ACR
-# ✅ Deploy no Azure
+# ✅ Cria Azure Database for MySQL Flexible Server
+# ✅ Deploy no Azure Container Apps
 # ✅ Mostra informações de acesso
 ```
 
 ### **Método 2: Manual**
 ```bash
 # 1. Build e push
-docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
-docker push challengemottuacr.azurecr.io/mottu-app:latest
+docker build -t challengemottuacr.azurecr.io/app:latest .
+docker push challengemottuacr.azurecr.io/app:latest
 
 # 2. Deploy
 ./deploy-containerapp.sh
@@ -134,8 +135,11 @@ docker-compose logs --tail=50 app
 # Verificar se a aplicação está respondendo
 curl http://localhost:8080/
 
-# Verificar MySQL
+# Verificar MySQL (desenvolvimento local)
 docker-compose exec mysql mysqladmin ping -h localhost -u root -p
+
+# Verificar Container Apps (produção)
+az containerapp list --resource-group mottu-rg
 ```
 
 

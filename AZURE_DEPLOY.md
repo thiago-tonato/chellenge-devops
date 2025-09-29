@@ -50,7 +50,7 @@ az login
 ### **1.1 Criar Resource Group**
 ```bash
 # Criar grupo de recursos
-az group create --name mottu-rg --location eastus
+az group create --name mottu-rg --location westus2
 
 # Verificar criação
 az group show --name mottu-rg
@@ -73,8 +73,8 @@ az acr login --name challengemottuacr
 # Para produção, use banco gerenciado
 az mysql flexible-server create \
   --resource-group mottu-rg \
-  --name mottu-mysql-server \
-  --location eastus \
+  --name mottumysqlsrv \
+        --location westus2 \
   --admin-user mottuadmin \
   --admin-password FIAP@2tdsp! \
   --sku-name Standard_B1ms \
@@ -83,7 +83,7 @@ az mysql flexible-server create \
 # Criar banco de dados
 az mysql flexible-server db create \
   --resource-group mottu-rg \
-  --server-name mottu-mysql-server \
+  --server-name mottumysqlsrv \
   --database-name mottu
 ```
 
@@ -92,53 +92,53 @@ az mysql flexible-server db create \
 ### **2.1 Build da Aplicação**
 ```bash
 # Build da imagem
-docker build -t challengemottuacr.azurecr.io/mottu-app:latest .
+docker build -t challengemottuacr.azurecr.io/app:latest .
 
 # Push para ACR
-docker push challengemottuacr.azurecr.io/mottu-app:latest
+docker push challengemottuacr.azurecr.io/app:latest
 ```
 
-### **2.2 Build do MySQL**
+### **2.2 MySQL (Azure Database for MySQL Flexible Server)**
 ```bash
-# Usar imagem oficial
-docker pull mysql:8.0
-docker tag mysql:8.0 challengemottuacr.azurecr.io/mottu-mysql:latest
-docker push challengemottuacr.azurecr.io/mottu-mysql:latest
+# O MySQL é gerenciado pelo Azure Database for MySQL Flexible Server
+# Não é necessário build/push de imagem MySQL
+# A aplicação se conecta diretamente ao servidor gerenciado
 ```
 
 ## 🚀 **Passo 3: Deploy no Azure**
 
 ### **3.1 Deploy usando Azure Container Apps (Recomendado)**
 ```bash
-# Deploy usando Docker Compose (método atual)
-az containerapp compose create \
-    --environment mottu-environment \
-    --resource-group mottu-rg \
-    --compose-file-path docker-compose.yml \
-    --registry-server challengemottuacr.azurecr.io \
-    --registry-username challengemottuacr \
-    --registry-password secretref:acr-secret
-
-# Ou usar o script automatizado
+# Deploy usando script automatizado (método atual)
 ./deploy-containerapp.sh
+
+# O script faz automaticamente:
+# ✅ Cria Azure Database for MySQL Flexible Server
+# ✅ Build e push da imagem
+# ✅ Deploy no Azure Container Apps
+# ✅ Configura variáveis de ambiente
 ```
 
 ### **3.2 Deploy Manual (Para aprendizado)**
 ```bash
 # 1. Criar Container App Environment
-az containerapp env create --name mottu-environment --resource-group mottu-rg --location eastus
+az containerapp env create --name mottu-environment --resource-group mottu-rg --location westus2
 
-# 2. Criar secret para ACR
-az containerapp secret set --name acr-secret --resource-group mottu-rg --environment mottu-environment --secrets registry-password=<ACR_PASSWORD>
-
-# 3. Deploy usando compose
-az containerapp compose create \
-    --environment mottu-environment \
+# 2. Deploy da aplicação
+az containerapp up \
+    --name app \
     --resource-group mottu-rg \
-    --compose-file-path docker-compose.yml \
+    --environment mottu-environment \
+    --image challengemottuacr.azurecr.io/app:latest \
+    --target-port 8080 \
+    --ingress external \
     --registry-server challengemottuacr.azurecr.io \
     --registry-username challengemottuacr \
-    --registry-password secretref:acr-secret
+    --registry-password <ACR_PASSWORD> \
+    --env-vars SPRING_PROFILES_ACTIVE=docker \
+               SPRING_DATASOURCE_URL="jdbc:mysql://mottumysqlsrv.mysql.database.azure.com:3306/mottu?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+               SPRING_DATASOURCE_USERNAME="mottuadmin" \
+               SPRING_DATASOURCE_PASSWORD="FIAP@2tdsp!"
 ```
 
 ## 📊 **Passo 4: Verificar Deploy**
@@ -146,19 +146,22 @@ az containerapp compose create \
 ### **4.1 Obter Informações de Acesso**
 ```bash
 # Obter endereço da aplicação
-az container show --resource-group mottu-rg --name mottu-compose --query "ipAddress.fqdn" -o tsv
+az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv
 
 # Ver status dos containers
-az container show --resource-group mottu-rg --name mottu-compose --query "containers[].{name:name,state:instanceView.currentState.state}"
+az containerapp list --resource-group mottu-rg --query "[].{name:name,provisioningState:properties.provisioningState,state:properties.runningStatus}"
 ```
 
 ### **4.2 Testar Aplicação**
 ```bash
+# Obter URL da aplicação
+APP_URL=$(az containerapp show --name app --resource-group mottu-rg --query "properties.configuration.ingress.fqdn" -o tsv)
+
 # Testar aplicação
-curl http://mottu-compose.eastus.azurecontainer.io:8080/
+curl https://$APP_URL/
 
 # Testar página inicial
-curl http://mottu-compose.eastus.azurecontainer.io:8080/
+curl https://$APP_URL/
 ```
 
 ## 🔐 **Passo 5: Configurações de Segurança**
@@ -166,7 +169,7 @@ curl http://mottu-compose.eastus.azurecontainer.io:8080/
 ### **5.1 Azure Key Vault (Produção)**
 ```bash
 # Criar Key Vault
-az keyvault create --name mottu-keyvault --resource-group mottu-rg --location eastus
+az keyvault create --name mottu-keyvault --resource-group mottu-rg --location westus2
 
 # Adicionar secrets
 az keyvault secret set --vault-name mottu-keyvault --name "mysql-password" --value "FIAP@2tdsp!"
@@ -187,10 +190,10 @@ az keyvault set-policy --name mottu-keyvault --object-id <MANAGED_IDENTITY_ID> -
 ### **6.1 Logs**
 ```bash
 # Logs da aplicação
-az container logs --resource-group mottu-rg --name mottu-compose --container-name mottu-app
+az containerapp logs show --name app --resource-group mottu-rg
 
-# Logs do MySQL
-az container logs --resource-group mottu-rg --name mottu-compose --container-name mottu-mysql
+# Logs do MySQL (Azure Database for MySQL Flexible Server)
+az mysql flexible-server logs list --resource-group mottu-rg --server-name mottumysqlsrv
 ```
 
 ### **6.2 Métricas**
@@ -202,15 +205,14 @@ az container logs --resource-group mottu-rg --name mottu-compose --container-nam
 
 ### **7.1 Auto-scaling**
 ```bash
-# Configurar auto-scaling
-az monitor autoscale create \
+# Configurar auto-scaling para Container Apps
+az containerapp update \
+  --name app \
   --resource-group mottu-rg \
-  --resource mottu-compose \
-  --resource-type Microsoft.ContainerInstance/containerGroups \
-  --name mottu-autoscale \
-  --min-count 1 \
-  --max-count 5 \
-  --count 2
+  --min-replicas 1 \
+  --max-replicas 5
+
+# Ou configurar via Azure Portal para regras mais complexas
 ```
 
 
