@@ -107,10 +107,6 @@ if ! az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $R
         --location $LOCATION \
         --admin-user $MYSQL_ADMIN_USER \
         --admin-password $MYSQL_ADMIN_PASSWORD \
-        --sku-name Standard_B1s \
-        --storage-size 32 \
-        --version 8.0 \
-        --public-access all
 
     print_message "Servidor MySQL '$MYSQL_SERVER_NAME' criado"
 else
