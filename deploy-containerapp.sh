@@ -143,6 +143,11 @@ print_info "Obtendo credenciais do ACR..."
 ACR_USERNAME=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "username" -o tsv)
 ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "passwords[0].value" -o tsv)
 
+# 10.1. Obter FQDN do MySQL
+print_info "Obtendo FQDN do MySQL..."
+MYSQL_FQDN=$(az mysql flexible-server show --name $MYSQL_SERVER_NAME --resource-group $RESOURCE_GROUP --query "fullyQualifiedDomainName" -o tsv)
+print_message "MySQL FQDN: $MYSQL_FQDN"
+
 # 11. Deploy/Update do App
 print_info "Fazendo deploy do App..."
 
